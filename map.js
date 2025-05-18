@@ -15,9 +15,14 @@ const map = new mapboxgl.Map({
 });
 
 map.on('load', async () => {
+  const bostonBikeLanes = 'https://bostonopendata-boston.opendata.arcgis.com/datasets/boston::existing-bike-network-2022.geojson';
+  const cambridgeBikeLanes = 'https://raw.githubusercontent.com/cambridgegis/cambridgegis_data/main/Recreation/Bike_Facilities/RECREATION_BikeFacilities.geojson';
+  const stationUrl = 'https://dsc106.com/labs/lab07/data/bluebikes-stations.json';
+  const trafficUrl = 'https://dsc106.com/labs/lab07/data/bluebikes-traffic-2024-03.csv';
+
   map.addSource('boston_route', {
     type: 'geojson',
-    data: 'https://bostonopendata-boston.opendata.arcgis.com/datasets/boston::existing-bike-network-2022.geojson',
+    data: bostonBikeLanes,
   });
 
   map.addLayer({
@@ -33,7 +38,7 @@ map.on('load', async () => {
 
   map.addSource('cambridge_route', {
     type: 'geojson',
-    data: 'https://raw.githubusercontent.com/cambridgegis/cambridgegis_data/main/Recreation/Bike_Facilities/RECREATION_BikeFacilities.geojson',
+    data: cambridgeBikeLanes,
   });
 
   map.addLayer({
@@ -47,14 +52,8 @@ map.on('load', async () => {
     },
   });
 
-  let jsonData;
-  try {
-    jsonData = await d3.json('https://dsc106.com/labs/lab07/data/bluebikes-stations.json');
-  } catch (error) {
-    console.error('Error loading station data:', error);
-  }
-
-  const trips = await d3.csv('https://dsc106.com/labs/lab07/data/bluebikes-traffic-2024-03.csv', (trip) => {
+  const jsonData = await d3.json(stationUrl);
+  const trips = await d3.csv(trafficUrl, (trip) => {
     trip.started_at = new Date(trip.started_at);
     trip.ended_at = new Date(trip.ended_at);
     return trip;
@@ -113,7 +112,6 @@ map.on('load', async () => {
   function updateScatterPlot(timeFilter) {
     const filteredTrips = filterTripsByTime(trips, timeFilter);
     const filteredStations = computeStationTraffic(stations, filteredTrips);
-
     if (timeFilter === -1) {
       radiusScale.range([0, 25]);
     } else {
